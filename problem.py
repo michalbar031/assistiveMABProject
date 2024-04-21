@@ -8,12 +8,17 @@ class Problem:
         self.robot = Robot(n_arms)
 
     def run_round(self):
+        print("----round----")
         human_choice = self.human.select_arm()
         self.human.update_choices(human_choice)
+        print("human_choice:", human_choice)
+        print("human_choices:", self.human.choices)
         self.robot.update_human_choice(human_choice)
 
         robot_choice = self.robot.select_arm()
         self.robot.update_actual_pulls(robot_choice)
+        print("robot_choice:", robot_choice)
+        print("robot_choices:", self.robot.actual_pulls)
         reward = self.bandit.generate_reward(robot_choice)
         self.human.update_rewards(robot_choice, reward)
         self.bandit.update(robot_choice, reward)

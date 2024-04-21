@@ -23,11 +23,16 @@ class EpsilonGreedy(HumanPolicy):
         self.epsilon = epsilon
 
     def select_arm(self):
-        if np.random.rand() < self.epsilon:
-            return np.random.choice(self.n_arms)
-        else:
-            success_rates = [np.mean([r for i, r in zip(self.choices, self.rewards) if i == arm])
-                             if self.choices.count(arm) > 0 else 0 for arm in range(self.n_arms)]
+        rand=np.random.rand()
+        print("rand:", rand)
+        if rand >= self.epsilon:
+            success_rates = [self.calculate_success_rate(arm) for arm in range(self.n_arms)]
+            print("actual_pulls:", self.actual_pulls)
+            print("Success rates:", success_rates)
+            print("argmax:", np.argmax(success_rates))
             return np.argmax(success_rates)
 
-# Additional policies (WSLS, TS, UCL, GI, and Epsilon-Optimal) would be implemented similarly
+        else:
+            return np.random.choice(self.n_arms)
+    def calculate_success_rate(self, arm):
+        return np.mean([r for i, r in zip(self.actual_pulls, self.rewards) if i == arm]) if self.actual_pulls.count(arm) > 0 else 0
