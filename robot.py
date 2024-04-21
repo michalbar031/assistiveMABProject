@@ -11,6 +11,8 @@ class Robot:
         self.rnn = RNN(input_size, hidden_size, n_arms)
         self.optimizer = torch.optim.Adam(self.rnn.parameters())
         self.criterion = nn.NLLLoss()
+        self.approximate_reward_parameters = [1] * n_arms  # Start with a uniform guess
+
 
     def update_human_choice(self, human_choice):
         self.human_observations.append(human_choice)
@@ -19,13 +21,40 @@ class Robot:
         self.actual_pulls.append(robot_pull)
 
 
-    # def select_arm(self):
-    #     # Simple strategy: follow the human's most common choice
-    #     if self.human_observations:
-    #         return np.argmax(np.bincount(self.human_observations))
-    #     return np.random.choice(self.n_arms)
+    def metropolis_hastings_update(self, current_params, likelihood_function, proposal_distribution, proposal_sampler, n_iterations):
+        theta = current_params
+        for _ in range(n_iterations):
+            # Propose new sample
+            theta_prime = proposal_sampler(theta)
+            # Calculate acceptance ratio
+            acceptance_ratio = min(1, (likelihood_function(theta_prime) * proposal_distribution(theta, theta_prime)) /
+                                      (likelihood_function(theta) * proposal_distribution(theta_prime, theta)))
+            # Accept or reject the new sample
+            if np.random.rand() < acceptance_ratio:
+                theta = theta_prime
+        return theta
 
     def select_arm(self):
+        # Approximate the posterior of reward parameters using Metropolis-Hastings
+        self.approximate_reward_parameters = self.metropolis_hastings_update(
+            self.approximate_reward_parameters,
+            likelihood_function=self.calculate_likelihood_of_actions,
+            proposal_distribution=self.calculate_proposal_pdf,
+            proposal_sampler=self.sample_from_proposal,
+            n_iterations=100  # for example
+        )
+
+        # Prepare the RNN input
+        input_tensor = self.prepare_input_for_rnn()
+        hidden = self.rnn.initHidden()
+        output, hidden = self.rnn(input_tensor, hidden)
+
+        # Use the output to decide on the arm to pull
+        probabilities = torch.exp(output).detach().numpy().flatten()
+        chosen_arm = np.random.choice(self.n_arms, p=probabilities)
+        return chosen_arm
+    def select_arm1(self):
+        self.metropolis_hastings_update()
         # Prepare input tensor from human observations and actual pulls
         input_tensor = self.prepare_input(self.human_observations, self.actual_pulls)
         hidden = self.rnn.initHidden()
@@ -39,10 +68,10 @@ class Robot:
         return chosen_arm
 
     def prepare_input(self, human_observations, actual_pulls):
-        # Prepare the input tensor, which could be a one-hot encoded vector
-        # representing the previous choices of human and robot
-        # This is a placeholder and will need to be tailored to your input structure
-        return torch.tensor([human_observations[-1], actual_pulls[-1]], dtype=torch.float).view(1, -1)
+        encoded_observation = torch.tensor(self.human_observations[-1], dtype=torch.float)
+        encoded_parameters = torch.tensor(self.approximate_reward_parameters, dtype=torch.float)
+
+        return torch.cat((encoded_observation.view(1, -1), encoded_parameters.view(1, -1)), 1)
 
     def update_train_rnn(self, rewards):
         # rewards is a list of the rewards obtained in each round

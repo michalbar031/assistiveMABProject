@@ -36,3 +36,28 @@ class EpsilonGreedy(HumanPolicy):
             return np.random.choice(self.n_arms)
     def calculate_success_rate(self, arm):
         return np.mean([r for i, r in zip(self.actual_pulls, self.rewards) if i == arm]) if self.actual_pulls.count(arm) > 0 else 0
+
+class WSLS(HumanPolicy):
+    def __init__(self, n_arms):
+        super().__init__(n_arms)
+        self.last_choice = None
+
+    def select_arm(self):
+        if self.last_choice is None:
+            return np.random.choice(self.n_arms)
+        else:
+            return self.last_choice
+
+    def update_choices(self, chosen_arm):
+        self.last_choice = chosen_arm
+
+
+class ThompsonSampling(HumanPolicy):
+    pass
+
+class UCL(HumanPolicy):
+    pass
+
+class GittinsIndex(HumanPolicy):
+    pass
+
