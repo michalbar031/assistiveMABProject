@@ -2,6 +2,45 @@ import numpy as np
 from rnn import RNN
 import torch
 import torch.nn as nn
+
+import torch.optim as optim
+
+
+class PPO:
+    def __init__(self, policy_network, clip_epsilon=0.2, ppo_epochs=10, mini_batch_size=64):
+        self.policy_network = policy_network
+        self.optimizer = optim.Adam(policy_network.parameters(), lr=1e-3)
+        self.clip_epsilon = clip_epsilon
+        self.ppo_epochs = ppo_epochs
+        self.mini_batch_size = mini_batch_size
+        self.MseLoss = nn.MSELoss()
+
+    def select_action(self, state):
+        state = torch.FloatTensor(state).unsqueeze(0)
+        with torch.no_grad():
+            action_probs = self.policy_network(state)
+        distribution = torch.distributions.Categorical(action_probs)
+        action = distribution.sample()
+        return action.item(), distribution.log_prob(action)
+
+    def update(self, memory):
+        # Assume `memory` is an object that has method `generate_batches`, which yields mini-batches of experience
+        for _ in range(self.ppo_epochs):
+            for states, actions, old_log_probs, returns, advantages in memory.generate_batches(self.mini_batch_size):
+                # Evaluate new log probabilities and values using current policy
+                new_log_probs = self.policy_network(states).log_prob(actions)
+                ratios = torch.exp(new_log_probs - old_log_probs)
+
+                # Clipped objective function
+                surr1 = ratios * advantages
+                surr2 = torch.clamp(ratios, 1.0 - self.clip_epsilon, 1.0 + self.clip_epsilon) * advantages
+                policy_loss = -torch.min(surr1, surr2).mean()
+
+                # Perform policy update
+                self.optimizer.zero_grad()
+                policy_loss.backward()
+                self.optimizer.step()
+
 class Robot:
     def __init__(self, n_arms,input_size):
         self.n_arms = n_arms
