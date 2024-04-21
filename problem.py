@@ -13,12 +13,11 @@ class Problem:
         self.robot.update_human_choice(human_choice)
 
         robot_choice = self.robot.select_arm()
+        self.robot.update_actual_pulls(robot_choice)
         reward = self.bandit.generate_reward(robot_choice)
         self.human.update_rewards(robot_choice, reward)
         self.bandit.update(robot_choice, reward)
 
-        robot_choice = self.robot.select_arm()
-        self.robot.update(human_choice)  # Robot sees human choice but not the reward
 
     def simulate(self, rounds):
         for _ in range(rounds):

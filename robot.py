@@ -8,7 +8,8 @@ class Robot:
     def update_human_choice(self, human_choice):
         self.human_observations.append(human_choice)
 
-    # def update(self, human_choice):
+    def update_actual_pulls(self, robot_pull):
+        self.actual_pulls.append(robot_pull)
 
 
     def select_arm(self):
