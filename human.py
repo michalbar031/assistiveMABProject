@@ -3,13 +3,15 @@ class HumanPolicy:
     def __init__(self, n_arms):
         self.n_arms = n_arms
         self.choices = []
+        self.actual_pulls = []
         self.rewards = []
 
     def select_arm(self):
         raise NotImplementedError
 
-    def update(self, chosen_arm, reward):
+    def update(self, chosen_arm, reward, actual_pull):
         self.choices.append(chosen_arm)
+        self.actual_pulls.append(actual_pull)
         self.rewards.append(reward)
 
 
