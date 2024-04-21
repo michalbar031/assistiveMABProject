@@ -9,9 +9,12 @@ class Problem:
 
     def run_round(self):
         human_choice = self.human.select_arm()
+        self.human.update_choices(human_choice)
+        self.robot.update_human_choice(human_choice)
+
         robot_choice = self.robot.select_arm()
         reward = self.bandit.generate_reward(robot_choice)
-        self.human.update(human_choice, reward,robot_choice)
+        self.human.update_rewards(robot_choice, reward)
         self.bandit.update(robot_choice, reward)
 
         robot_choice = self.robot.select_arm()

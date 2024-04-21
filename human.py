@@ -9,10 +9,12 @@ class HumanPolicy:
     def select_arm(self):
         raise NotImplementedError
 
-    def update(self, chosen_arm, reward, actual_pull):
+    def update_choices(self, chosen_arm):
         self.choices.append(chosen_arm)
-        self.actual_pulls.append(actual_pull)
+
+    def update_rewards(self,robot_pull, reward):
         self.rewards.append(reward)
+        self.actual_pulls.append(robot_pull)
 
 
 class EpsilonGreedy(HumanPolicy):
