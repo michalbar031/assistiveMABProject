@@ -40,7 +40,7 @@ The project is organized into several Python modules, each serving a specific fu
 - **Usage**: Imported by `robot.py` to build the decision-making model.
 
 ## Running the Simulation
-1. Ensure you have Python and necessary libraries installed (`numpy`, `torch`, etc.).
+1. Ensure you have Python and necessary libraries installed (`numpy`, `torch`).
 2. Navigate to the project directory in your terminal.
 3. Run the command: `python main.py`
 
@@ -48,5 +48,22 @@ The project is organized into several Python modules, each serving a specific fu
 - Python 3.10
 - NumPy
 - PyTorch
+## Extension: The Mortal Assistive MAB
+The Mortal Assistive Multi-Armed Bandit problem combines the challenges of adaptive decision-making with the reality that options may have limited lifetimes. This reflects real-world scenarios where products might go out of stock, promotional campaigns end, or user interests shift, necessitating continual re-evaluation and exploration of the available choices.
+The motivation for integrating the assistive aspect into the mortal MAB framework is to enhance systems' abilities to adaptively interact with users or environments. For instance, in personalized advertising, an ad that is effective for a certain audience may only be relevant during a specific event or within a limited time window due to budget constraints or campaign durations. Similarly, in stock trading, certain investment opportunities might have short-lived viability, requiring a strategy that not only learns from past interactions but also anticipates and reacts to expiring options effectively.
+The adapted ADAPTIVEGREEDY algorithm for the Mortal Assistive MAB problem combines the ideas of the adaptive greedy heuristic with the PPO algorithm. 
 
+###The main modifications are as follows:
+The `select_arm` method now incorporates the adaptive greedy heuristic. With probability epsilon, the robot explores by selecting a random active arm. With probability 1 - epsilon, the robot exploits by selecting the arm with the highest Upper Confidence Bound (UCB) value among the active arms. The UCB value for each arm is calculated based on the average reward and the number of times the arm has been pulled.
+The `update_arm_stats` method is introduced to update the count and total reward for each arm after it is pulled. This information is used to calculate the UCB values.
+The prepare_input_sequence method remains the same as before, which prepares the input sequence for the RNN based on the human and robot choice history.
+The `update_human_choice` and `update_actual_pulls` methods are used to update the human observations and robot pulls, respectively.
+
+The adapted algorithm addresses the challenges of the Mortal Assistive MAB problem by:
+
+Considering only the active arms during the arm selection process. This ensures that the robot does not select expired arms.
+Using the adaptive greedy heuristic to balance exploration and exploitation. The robot explores with a small probability epsilon to discover potentially better arms, while exploiting the best arm based on the UCB values to maximize rewards.
+Updating the arm statistics (count and total reward) after each pull, which allows the algorithm to adapt to the changing dynamics of the mortal bandit setting.
+
+By incorporating these modifications, the adapted ADAPTIVEGREEDY algorithm can effectively handle the Mortal Assistive MAB problem, learning from both the human choices and the rewards obtained by the robot while considering the limited lifetimes of the arms.
 
