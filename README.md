@@ -9,7 +9,7 @@ This extension aims to generalize the framework, offering insights into more com
 This project implements a simulation of multi-armed bandit (MAB) scenarios using different policies and strategies, including human-like decision making and robot interaction through reinforcement learning techniques like PPO (Proximal Policy Optimization). The system models a decision-making environment where both a human-like agent and an automated robot interact to optimize their choices among multiple options with uncertain rewards.
 
 ## Structure
-The project is organized into several Python modules, each serving a specific function in the MAB simulation:
+The project is organized into several Python modules, each serving a specific function in the Assistive MAB simulation:
 
 ### `main.py`
 - **Purpose**: Serves as the entry point of the program. It initializes the simulation environment, including the number of arms, rounds, and the type of human policy to be simulated.
