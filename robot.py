@@ -145,6 +145,7 @@ class Robot:
         return chosen_arm
 
     def prepare_input_sequence(self, human_choice_history, robot_choice_history):
+        print("--prepare_input_sequence--")
         sequence_length = len(human_choice_history)
         input_sequence = torch.zeros(1, sequence_length, 2)
 
@@ -158,6 +159,7 @@ class Robot:
         return input_sequence
 
     def sample_trajectories(self, alphas, betas, T, human_policy):
+        print("--sample_trajectories--")
         trajectories = []
         for _ in range(self.trajectories_number_sample):
             theta = [np.random.beta(alpha, beta) for alpha, beta in zip(alphas, betas)]
@@ -174,6 +176,7 @@ class Robot:
                     human_choice_history.append(human_choice)
                     robot_choice_history.append(human_choice)
                     sample_human.update_choices(human_choice)
+                    robot_choice = human_choice
                 else:
                     human_choice = sample_human.select_arm()
                     sample_human.update_choices(human_choice)
@@ -185,10 +188,6 @@ class Robot:
                 trajectories.append((robot_choice, human_choice, r))
 
         return trajectories
-
-    def train(self):
-        trajectories = self.sample_trajectories(self.alphas, self.betas, self.T, self.human_policy)
-        self.ppo.update(trajectories)
 
     def sample_trajectories_old(self,alphas,betas, T,human_policy):
         for _ in range(self.trajectories_number_sample):
