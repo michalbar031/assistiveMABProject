@@ -2,7 +2,7 @@
 
 ## Overview
 In this final project, I explore the "Assistive Multi-Armed Bandit" framework where a robot assists a human in a bandit task to enhance preference learning under uncertainty. 
-This research is highly relevant to our course on Multi-Armed Bandits and Regret Minimization, as it integrates these concepts to optimize human-robot interaction dynamics and thus minimize the human regret . 
+This research is highly relevant to our course on Multi-Armed Bandits and Regret Minimization, as it integrates these concepts to optimize human-robot interaction dynamics and thus minimize the human regret. 
 The project entails a thorough summary of the paper's models and findings, implementation of the proposed algorithm, and a proof sketch of key theoretical claims. 
 Further, I propose an extension that adapts the model to dynamically changing arms. 
 This extension aims to generalize the framework, offering insights into more complex, real-world scenarios where learning conditions are not static and the set of available actions in each time point is not the same (mortal arms).
@@ -43,7 +43,6 @@ The project is organized into several Python modules, each serving a specific fu
 1. Ensure you have Python and necessary libraries installed (`numpy`, `torch`, etc.).
 2. Navigate to the project directory in your terminal.
 3. Run the command: `python main.py`
-4. Follow any on-screen prompts (if implemented) or check the terminal output to review the results of the simulation.
 
 ## Dependencies
 - Python 3.10
