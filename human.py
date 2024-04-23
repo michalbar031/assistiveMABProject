@@ -56,7 +56,21 @@ class WSLS(HumanPolicy):
 
 
 class ThompsonSampling(HumanPolicy):
-    pass
+    def __init__(self, n_arms, alpha=1, beta=1):
+        super().__init__(n_arms)
+        self.alpha = [alpha] * n_arms
+        self.beta = [beta] * n_arms
+
+    def select_arm(self):
+        samples = [np.random.beta(a, b) for a, b in zip(self.alpha, self.beta)]
+        return np.argmax(samples)
+
+    def update_rewards(self, robot_pull, reward):
+        super().update_rewards(robot_pull, reward)
+        if reward:
+            self.alpha[robot_pull] += 1
+        else:
+            self.beta[robot_pull] += 1
 
 class UCL(HumanPolicy):
     pass
