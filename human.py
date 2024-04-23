@@ -44,9 +44,10 @@ class WSLS(HumanPolicy):
     def __init__(self, n_arms):
         super().__init__(n_arms)
         self.last_choice = None
+        self.last_reward = None
 
     def select_arm(self):
-        if self.last_choice is None:
+        if self.last_choice is None or self.last_reward == 0:
             return np.random.choice(self.n_arms)
         else:
             return self.last_choice
@@ -54,6 +55,10 @@ class WSLS(HumanPolicy):
     def update_choices(self, chosen_arm):
         self.last_choice = chosen_arm
 
+    def update_rewards(self, robot_pull, reward):
+        super().update_rewards(robot_pull, reward)
+        if robot_pull == self.last_choice:
+            self.last_reward = reward
 
 class ThompsonSampling(HumanPolicy):
     def __init__(self, n_arms, alpha=1, beta=1):
@@ -73,8 +78,53 @@ class ThompsonSampling(HumanPolicy):
             self.beta[robot_pull] += 1
 
 class UCL(HumanPolicy):
-    pass
+    def __init__(self, n_arms, c=1):
+        super().__init__(n_arms)
+        self.c = c
+        self.pulls = [0] * n_arms
+        self.means = [0] * n_arms
+
+    def select_arm(self):
+        if 0 in self.pulls:
+            return self.pulls.index(0)
+        ucb_values = [mean + self.c * np.sqrt(np.log(sum(self.pulls)) / pull) for mean, pull in zip(self.means, self.pulls)]
+        return np.argmax(ucb_values)
+
+    def update_rewards(self, robot_pull, reward):
+        super().update_rewards(robot_pull, reward)
+        self.pulls[robot_pull] += 1
+        self.means[robot_pull] = (self.means[robot_pull] * (self.pulls[robot_pull] - 1) + reward) / self.pulls[robot_pull]
 
 class GittinsIndex(HumanPolicy):
-    pass
+    def __init__(self, n_arms, gamma=0.9):
+        super().__init__(n_arms)
+        self.gamma = gamma
+        self.pulls = [0] * n_arms
+        self.means = [0] * n_arms
 
+    def select_arm(self):
+        if 0 in self.pulls:
+            return self.pulls.index(0)
+        gittins_indices = [self.calculate_gittins_index(mean, pull) for mean, pull in zip(self.means, self.pulls)]
+        return np.argmax(gittins_indices)
+
+    def update_rewards(self, robot_pull, reward):
+        super().update_rewards(robot_pull, reward)
+        self.pulls[robot_pull] += 1
+        self.means[robot_pull] = (self.means[robot_pull] * (self.pulls[robot_pull] - 1) + reward) / self.pulls[robot_pull]
+
+    def calculate_gittins_index(self, mean, pull):
+        # Simplified approximation of the Gittins index
+        return mean + np.sqrt(2 * np.log(1 / (1 - self.gamma)) / pull)
+
+class EpsilonOptimal(HumanPolicy):
+    def __init__(self, n_arms, epsilon=0.1, reward_params=None):
+        super().__init__(n_arms)
+        self.epsilon = epsilon
+        self.reward_params = reward_params
+
+    def select_arm(self):
+        if np.random.rand() < self.epsilon:
+            return np.random.choice(self.n_arms)
+        else:
+            return np.argmax(self.reward_params)
