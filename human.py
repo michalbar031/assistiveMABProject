@@ -37,6 +37,9 @@ class EpsilonGreedy(HumanPolicy):
     def calculate_success_rate(self, arm):
         return np.mean([r for i, r in zip(self.actual_pulls, self.rewards) if i == arm]) if self.actual_pulls.count(arm) > 0 else 0
 
+    def get_arm_policy_distribution(self):
+        return [self.calculate_success_rate(arm) for arm in range(self.n_arms)]
+
 class WSLS(HumanPolicy):
     def __init__(self, n_arms):
         super().__init__(n_arms)

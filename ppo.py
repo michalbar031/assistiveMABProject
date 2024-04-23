@@ -46,10 +46,21 @@ class PPO:
         advantages = []
 
         for trajectory in trajectories:
-            # Process each trajectory and compute advantages
-            # Append the processed data to the respective lists
-            # You can use your preferred advantage estimation method here
-            pass
+            # Extract states, actions, and rewards from the trajectory
+            # (assuming trajectory is a list of (state, action, reward) tuples)
+            states_t, actions_t, rewards_t = zip(*trajectory)
+
+            # Compute advantages using the rewards and the value function V(s)
+            # This requires implementing a function to estimate V(s), or you could train a separate network for it
+            advantages_t = self.compute_advantages(rewards_t, states_t)
+
+            states.extend(states_t)
+            actions.extend(actions_t)
+            rewards.extend(rewards_t)
+            advantages.extend(advantages_t)
+
+            # Compute old log probabilities of actions, which requires you to have saved the log probs during trajectory generation
+            old_log_probs.extend(self.get_log_probs(states_t, actions_t))
 
         states = torch.tensor(states, dtype=torch.float)
         actions = torch.tensor(actions, dtype=torch.long)

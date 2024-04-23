@@ -9,15 +9,14 @@ class RNN(nn.Module):
         self.hidden_size = hidden_size
         self.rnn = nn.RNN(input_size, hidden_size, batch_first=True)
         self.fc = nn.Linear(hidden_size, output_size)
-        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, input_sequence):
         batch_size = input_sequence.size(0)
         hidden = self.initHidden(batch_size)
         output, _ = self.rnn(input_sequence, hidden)
         output = self.fc(output[:, -1, :])
-        output = self.softmax(output)
-        return output
+        log_probs = nn.functional.log_softmax(output, dim=1)
+        return log_probs
 
     def initHidden(self, batch_size):
         return torch.zeros(1, batch_size, self.hidden_size)
