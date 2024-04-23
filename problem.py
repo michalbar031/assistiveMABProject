@@ -11,7 +11,8 @@ class Problem:
         self.robot_history_vector = [-1] * n_rounds
         self.human_policy_vector = self.get_policy_vector(self.human)
         self.n_rounds = n_rounds
-        self.input_size = len(self.human_history_vector) + len(self.robot_history_vector)+len(self.human_policy_vector)
+        # self.input_size = len(self.human_history_vector) + len(self.robot_history_vector)+len(self.human_policy_vector)
+        self.input_size = 1
         self.robot = Robot(n_arms,self.input_size)
         self.ppo = PPO(self.robot.rnn)
     def get_policy_vector(self, human_policy):
@@ -48,9 +49,12 @@ class Problem:
             betas=self.bandit.betas
             trajectories=self.robot.sample_trajectories(alphas,betas,T=round_number,human_policy=self.human_policy)
             self.ppo.update(trajectories)
+            print("flag2")
             self.robot.rnn=self.ppo.policy_network
-
-            robot_choice = self.robot.select_arm(self.human_history_vector[:round_number+1], self.robot_history_vector[:round_number])
+            # robot_choice = self.robot.select_arm(self.human_history_vector[round_number],
+            #                                      self.robot_history_vector[round_number - 1])
+            robot_choice = self.robot.select_arm(self.human_history_vector[-1], self.robot_history_vector[-1])
+            # robot_choice = self.robot.select_arm(self.human_history_vector[:round_number+1], self.robot_history_vector[:round_number])
             self.robot.update_actual_pulls(robot_choice)
             self.robot_history_vector[round_number] = robot_choice
 

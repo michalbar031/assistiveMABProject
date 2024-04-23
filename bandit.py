@@ -48,23 +48,23 @@ class BernoulliBandit(Bandit):
     def generate_reward(self, i):
         return np.random.rand() < self.probas[i]
 
-
-# Example usage
-if __name__ == "__main__":
-    bernoulli_bandit = BernoulliBandit(4)
-    beta_bandit = BetaBernoulliBandit(4)
-
-    print("Initial Bernoulli Probabilities:", bernoulli_bandit.probas)
-    print("Initial Beta Means:", beta_bandit.get_estimated_probas())
-
-    for i in range(50):
-        arm = np.random.choice(4)
-        beta_bandit.generate_reward(arm)
-        bernoulli_bandit.generate_reward(arm)
-        # print(f"Updated Bernoulli Probabilities:{i}", bernoulli_bandit.probas)
-        print(f"Updated Beta Means:{i}", beta_bandit.get_estimated_probas())
-
-    print("Updated Beta Means:", beta_bandit.get_estimated_probas())
+#
+# # Example usage
+# if __name__ == "__main__":
+#     bernoulli_bandit = BernoulliBandit(4)
+#     beta_bandit = BetaBernoulliBandit(4)
+#
+#     print("Initial Bernoulli Probabilities:", bernoulli_bandit.probas)
+#     print("Initial Beta Means:", beta_bandit.get_estimated_probas())
+#
+#     for i in range(50):
+#         arm = np.random.choice(4)
+#         beta_bandit.generate_reward(arm)
+#         bernoulli_bandit.generate_reward(arm)
+#         # print(f"Updated Bernoulli Probabilities:{i}", bernoulli_bandit.probas)
+#         print(f"Updated Beta Means:{i}", beta_bandit.get_estimated_probas())
+#
+#     print("Updated Beta Means:", beta_bandit.get_estimated_probas())
 
 
 # class BernoulliBandit(Bandit):

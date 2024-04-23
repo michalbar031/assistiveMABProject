@@ -10,126 +10,13 @@ from ppo import PPO
 import torch.optim as optim
 from bandit import BernoulliBandit
 
-
-# class PPO:
-#     def __init__(self, policy_network, clip_epsilon=0.2, ppo_epochs=10, mini_batch_size=64):
-#         self.policy_network = policy_network
-#         self.optimizer = optim.Adam(policy_network.parameters(), lr=1e-3)
-#         self.clip_epsilon = clip_epsilon
-#         self.ppo_epochs = ppo_epochs
-#         self.mini_batch_size = mini_batch_size
-#         self.MseLoss = nn.MSELoss()
-#
-#
-#     def sample_trajectories(pi, H, theta, size, T):
-#         all_trajectories = []
-#         for _ in range(size):
-#             trajectory = []
-#             # Initial action and observation
-#             a_t_minus_1 = None  # Assuming None for the first action
-#             h_t = None  # Assuming None for the first human action
-#
-#             for t in range(T):
-#                 # Sample human action based on policy H
-#                 h_t = H.sample_action(h_t, a_t_minus_1)
-#                 # Prepare input for RNN
-#                 input_tensor = prepare_input_for_rnn(a_t_minus_1, h_t)
-#                 hidden = pi.initHidden()
-#                 # Get action probabilities from RNN
-#                 action_probs, hidden = pi(input_tensor, hidden)
-#                 # Sample action from the probability distribution
-#                 m = Categorical(action_probs)
-#                 a_t = m.sample().item()
-#                 # Simulate reward from the MAB
-#                 r_t = np.random.binomial(1, theta[a_t])
-#                 # Store the transition
-#                 trajectory.append((h_t, a_t, r_t))
-#                 # Update the previous action
-#                 a_t_minus_1 = a_t
-#
-#             all_trajectories.append(trajectory)
-#         return all_trajectories
-#
-#     def select_action(self, state):
-#         state = torch.FloatTensor(state).unsqueeze(0)
-#         with torch.no_grad():
-#             action_probs = self.policy_network(state)
-#         distribution = torch.distributions.Categorical(action_probs)
-#         action = distribution.sample()
-#         return action.item(), distribution.log_prob(action)
-#
-#     def ppo_update(policy_network, optimizer, all_trajectories, clip_epsilon, ppo_epochs, mini_batch_size):
-#         for _ in range(ppo_epochs):
-#             # Assume 'generate_batches' is a function to create mini-batches from 'all_trajectories'
-#             for states, actions, old_log_probs, returns, advantages in generate_batches(all_trajectories,
-#                                                                                         mini_batch_size):
-#                 # ... (rest of the PPO update code as mentioned earlier)
-#                 # Remember to compute advantages and returns as needed
-#                 pass
-#
-#     def train_policy(pi, H, ppo_epochs, sample_size, T, theta_prior):
-#         for _ in range(ppo_epochs):
-#             theta = np.random.choice(theta_prior, size=sample_size)  # Sample from prior
-#             all_trajectories = sample_trajectories(pi, H, theta, sample_size, T)
-#             ppo_update(pi, optimizer, all_trajectories, clip_epsilon=0.2, ppo_epochs=10, mini_batch_size=64)
-#
-#     # Assuming 'H' is your human policy class with a 'sample_action' method and 'pi' is your policy network
-#     # Also assuming 'theta_prior' is an array of possible theta values for the arms
-#     # Run the training
-#     # train_policy(pi, H, ppo_epochs=50, sample_size=100, T=50, theta_prior=[0.1, 0.2, 0.3, 0.4])
-#
-#     def update(self, memory):
-#         for _ in range(self.ppo_epochs):
-#             for states, actions, old_log_probs, returns, advantages in memory.generate_batches(self.mini_batch_size):
-#                 # Get the policy's action log probabilities and state values
-#                 pi, value = self.policy_network(states)
-#                 new_log_probs = pi.log_prob(actions)
-#                 state_values = value.squeeze()
-#
-#                 # Compute the ratio between new and old policy probabilities
-#                 ratios = torch.exp(new_log_probs - old_log_probs)
-#
-#                 # Compute the PPO objective
-#                 surr1 = ratios * advantages
-#                 surr2 = torch.clamp(ratios, 1.0 - self.clip_epsilon, 1.0 + self.clip_epsilon) * advantages
-#                 policy_loss = -torch.min(surr1, surr2).mean()
-#
-#                 # Compute value loss
-#                 value_loss = self.MseLoss(state_values, returns)
-#
-#                 # Combine policy and value losses if needed
-#                 loss = policy_loss + value_loss
-#
-#                 # Perform a policy update using gradient ascent
-#                 self.optimizer.zero_grad()
-#                 loss.backward()
-#                 self.optimizer.step()
-#
-#     def update_old(self, memory):
-#         # Assume `memory` is an object that has method `generate_batches`, which yields mini-batches of experience
-#         for _ in range(self.ppo_epochs):
-#             for states, actions, old_log_probs, returns, advantages in memory.generate_batches(self.mini_batch_size):
-#                 # Evaluate new log probabilities and values using current policy
-#                 new_log_probs = self.policy_network(states).log_prob(actions)
-#                 ratios = torch.exp(new_log_probs - old_log_probs)
-#
-#                 # Clipped objective function
-#                 surr1 = ratios * advantages
-#                 surr2 = torch.clamp(ratios, 1.0 - self.clip_epsilon, 1.0 + self.clip_epsilon) * advantages
-#                 policy_loss = -torch.min(surr1, surr2).mean()
-#
-#                 # Perform policy update
-#                 self.optimizer.zero_grad()
-#                 policy_loss.backward()
-#                 self.optimizer.step()
-
 class Robot:
     def __init__(self, n_arms,input_size,hidden_size=32,trajectories_number_sample=10):
         self.n_arms = n_arms
         self.human_observations = []
         self.actual_pulls = []
         self.hidden_size = hidden_size
-        self.rnn = RNN(input_size, hidden_size, n_arms)
+        self.rnn = RNN(input_size, hidden_size, 1)
         self.ppo = PPO(self.rnn)
         self.trajectories = []
         self.optimizer = torch.optim.Adam(self.rnn.parameters())
@@ -139,12 +26,85 @@ class Robot:
         self.approximate_reward_parameters = np.random.rand(n_arms)  # Initial guess for theta
 
     def select_arm(self, human_choice_history, robot_choice_history):
+        # Assume there is at least one prior action
+        if len(robot_choice_history) == 0:
+            robot_choice_history.append(0)  # Default starting action
+        if len(human_choice_history) == 0:
+            human_choice_history.append(0)  # Default starting action
+
+        input_pair = torch.tensor([[robot_choice_history[-1], human_choice_history[-1]]], dtype=torch.float)
+        input_sequence = input_pair.unsqueeze(0)  # Batch size of 1
+        probabilities = self.rnn(input_sequence)  # Forward pass through the RNN
+        chosen_arm = torch.argmax(probabilities).item()  # Select arm with the highest probability
+        return chosen_arm
+    def select_arm111(self, human_choice_history, robot_choice_history):
         input_sequence = self.prepare_input_sequence(human_choice_history, robot_choice_history)
-        arm_distribution = self.rnn(input_sequence)
-        chosen_arm = torch.argmax(arm_distribution, dim=1).item()
+        print("Input sequence shape:", input_sequence.shape)
+
+        log_probs = self.rnn(input_sequence)
+        probabilities = torch.exp(log_probs).squeeze(0)
+
+        # Choose the arm with the highest probability
+        chosen_arm = torch.argmax(probabilities).item()
         return chosen_arm
 
     def prepare_input_sequence(self, human_choice_history, robot_choice_history):
+        sequence_length = len(human_choice_history)
+        input_sequence = torch.zeros(1, sequence_length, 2)
+        print("Input sequence shape:", input_sequence.shape)
+
+        for i in range(sequence_length):
+            if i == 0:
+                input_sequence[0, i, 0] = 0  # Assign a default value for the first robot choice
+            else:
+                input_sequence[0, i, 0] = robot_choice_history[i - 1]
+            input_sequence[0, i, 1] = human_choice_history[i]
+
+        return input_sequence
+
+    def select_armg(self, human_choice_history, robot_choice_history):
+        # If there is no previous history, use a default value of 0
+        last_robot_choice = robot_choice_history[-1] if robot_choice_history else 0
+        last_human_choice = human_choice_history[-1] if human_choice_history else 0
+
+        # Prepare the input tensor as a new sequence
+        input_pair = torch.tensor([[last_robot_choice, last_human_choice]], dtype=torch.float)
+
+        # Reshape input to match RNN expectations (batch_size, sequence_length, input_size)
+        input_sequence = input_pair.unsqueeze(0).unsqueeze(0)
+        print("Input sequence shape:", input_sequence.shape)
+
+        # Forward pass through RNN
+        log_probs = self.rnn(input_sequence)
+        probabilities = torch.exp(log_probs).squeeze(0)
+
+        # Choose the arm with the highest probability
+        chosen_arm = torch.argmax(probabilities).item()
+        return chosen_arm
+    def select_armk(self, human_choice, robot_choice):
+        print("--select_arm--")
+        input_pair = torch.tensor([[robot_choice, human_choice]], dtype=torch.float).unsqueeze(0)
+        print("!!!!!input_sequence:", input_pair)
+        log_probs = self.rnn(input_pair)
+        probabilities = torch.exp(log_probs).squeeze(0)
+
+        # Choose the arm with the highest probability
+        chosen_arm = torch.argmax(probabilities).item()
+        return chosen_arm
+    def select_arm2(self, human_choice_history, robot_choice_history):
+        print("--select_arm--")
+        input_pair = torch.tensor([[robot_choice_history[-1], human_choice_history[-1]]], dtype=torch.float)
+
+        # input_sequence = self.prepare_input_sequence(human_choice_history, robot_choice_history)
+        print("!!!!!input_sequence:", input_pair)
+        log_probs = self.rnn(input_pair)
+        probabilities = torch.exp(log_probs).squeeze(0)
+
+        # Choose the arm with the highest probability
+        chosen_arm = torch.argmax(probabilities).item()
+        return chosen_arm
+
+    def prepare_input_sequence1(self, human_choice_history, robot_choice_history):
         print("--prepare_input_sequence--")
         sequence_length = len(human_choice_history)
         input_sequence = torch.zeros(1, sequence_length, 2)
@@ -158,7 +118,38 @@ class Robot:
 
         return input_sequence
 
+
     def sample_trajectories(self, alphas, betas, T, human_policy):
+        print("--sample_trajectories--")
+        trajectories = []
+        for _ in range(self.trajectories_number_sample):
+            theta = [np.random.beta(alpha, beta) for alpha, beta in zip(alphas, betas)]
+            sample_bandit = BernoulliBandit(self.n_arms, probas=theta)
+            sample_human = human_policy(self.n_arms)
+
+            trajectory = []
+
+            for t in range(T):
+                if t == 0:
+                    human_choice = self.human_observations[t]
+                    r = sample_bandit.generate_reward(human_choice)
+                    sample_human.update_choices(human_choice)
+                    robot_choice = human_choice
+                else:
+                    human_choice = sample_human.select_arm()
+                    sample_human.update_choices(human_choice)
+                    r = sample_bandit.generate_reward(human_choice)
+                    robot_choice = self.select_arm([human_choice], [robot_choice])
+
+                print("ROBOT")
+                print("Robot choice:", robot_choice)
+                print("Human choice:", human_choice)
+                trajectory.append((robot_choice, human_choice, r))
+
+            trajectories.append(trajectory)
+
+        return trajectories
+    def sample_trajectories1(self, alphas, betas, T, human_policy):
         print("--sample_trajectories--")
         trajectories = []
         for _ in range(self.trajectories_number_sample):
